@@ -23,6 +23,7 @@ from pathlib import Path
 import psycopg
 
 from demo import reset
+from demo.settle import settle
 from reconciliation import reconcile
 from stack import cluster, kafka, tools
 
@@ -98,7 +99,6 @@ def main(argv: list[str] | None = None) -> int:
 
     print("== submit")
     job_id = cluster.submit()
-    baseline = int(cluster.latest_completed_checkpoint(job_id).get("id", 0))
 
     print(f"== produce {expected.events} events, {args.late_pct:.0%} shifted {args.late_seconds}s")
     tools.run(
@@ -125,7 +125,9 @@ def main(argv: list[str] | None = None) -> int:
         ]
     )
     kafka.send_flush_marker()
-    cluster.wait_for_checkpoint(job_id, after_id=baseline, timeout=180)
+    print("== wait for the marker to close the windows")
+    checkpoint_id = settle(job_id)
+    print(f"flushed through checkpoint {checkpoint_id}")
 
     print("== reconcile the provisional view")
     code = reconcile.main(

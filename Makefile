@@ -9,7 +9,7 @@ JAVA_HOME ?= $(HOME)/.local/java/17
 MVN ?= $(HOME)/.local/maven/bin/mvn
 
 .PHONY: help install build stack-up stack-down stack-status db-init submit reset \
-	produce flush replay reconcile restate demo-exactly-once demo-late-data \
+	produce flush wait-flush replay reconcile restate demo-exactly-once demo-late-data \
 	dashboard test lint fmt clean
 
 help:
@@ -54,12 +54,14 @@ produce: ## Produce a deterministic, event-time ordered day to Kafka
 flush: ## Send the end-of-replay control marker (closes open windows)
 	$(PY) -m stack.kafka flush
 
+wait-flush: ## Wait until the marker crossed the windows and was checkpointed
+	$(PY) -m demo.settle
+
 replay: reset submit ## Full deterministic replay: reset, submit, produce, flush
 	$(UV) run eventforge kafka --seed $(SEED) --start $(START) --days $(DAYS) \
 		--bootstrap 127.0.0.1:9092 --topic ledger.events --rate $(RATE) --sort
 	$(PY) -m stack.kafka flush
-	@echo "waiting for the watermark to close the final window..."
-	@sleep 15
+	$(PY) -m demo.settle
 	$(PY) -m reconciliation.reconcile --seed $(SEED) --start $(START) --days $(DAYS)
 
 reconcile: ## Compare the streaming projection with eventforge ground truth

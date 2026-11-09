@@ -27,6 +27,7 @@ from pathlib import Path
 import psycopg
 
 from demo import reset
+from demo.settle import settle
 from reconciliation import reconcile
 from stack import cluster, kafka, tools
 
@@ -124,9 +125,8 @@ def main(argv: list[str] | None = None) -> int:
 
         print("== flush open windows")
         kafka.send_flush_marker()
-        cluster.wait_for_checkpoint(
-            job_id, after_id=int(checkpoint_before.get("id", 0)), timeout=180
-        )
+        checkpoint_id = settle(job_id)
+        print(f"flushed through checkpoint {checkpoint_id}")
 
         print("== reconcile")
         code = reconcile.main(

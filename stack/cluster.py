@@ -104,7 +104,7 @@ restart-strategy:
     )
 
 
-def rest(path: str) -> dict:
+def rest(path: str) -> dict | list:
     with urllib.request.urlopen(f"{REST}{path}", timeout=10) as response:
         return json.loads(response.read())
 
@@ -194,6 +194,76 @@ def wait_for_checkpoint(job_id: str, *, after_id: int = 0, timeout: float = 120.
 
     tools.wait_for(f"checkpoint after {after_id}", ready, timeout=timeout)
     return holder
+
+
+def current_input_watermark(entries: list[dict]) -> int | None:
+    """Pull the latest input watermark out of a Flink ``/watermarks`` payload.
+
+    Kept pure so the parsing can be tested without a cluster. Flink reports one
+    entry per watermark channel; the job is parallelism 1, so the max is the
+    operator's watermark.
+    """
+    values = []
+    for entry in entries:
+        if not str(entry.get("id", "")).endswith("currentInputWatermark"):
+            continue
+        raw = entry.get("value")
+        if raw in (None, ""):
+            continue
+        values.append(int(raw))
+    return max(values) if values else None
+
+
+def vertex_watermark(job_id: str, *, name_contains: str) -> int | None:
+    """Current input watermark of the first vertex whose name matches."""
+    detail = rest(f"/jobs/{job_id}")
+    vertex = next(
+        (v for v in detail.get("vertices", []) if name_contains in v.get("name", "")), None
+    )
+    if vertex is None:
+        return None
+    entries = rest(f"/jobs/{job_id}/vertices/{vertex['id']}/watermarks")
+    return current_input_watermark(entries)
+
+
+def wait_for_watermark(
+    job_id: str,
+    target_ms: int,
+    *,
+    name_contains: str = "revenue-window",
+    timeout: float = 240.0,
+) -> int:
+    """Wait until ``name_contains`` has consumed past ``target_ms`` in event time."""
+    holder: dict = {}
+
+    def passed() -> bool:
+        try:
+            value = vertex_watermark(job_id, name_contains=name_contains)
+        except (urllib.error.URLError, TimeoutError, ConnectionError):
+            return False
+        if value is None:
+            return False
+        holder["value"] = value
+        return value >= target_ms
+
+    tools.wait_for(f"watermark >= {target_ms}", passed, timeout=timeout)
+    return holder["value"]
+
+
+def wait_for_flush(job_id: str, *, timeout: float = 240.0) -> dict:
+    """Wait until the end-of-replay marker has been consumed and checkpointed.
+
+    A checkpoint newer than the one observed *after* the watermark has passed
+    is guaranteed to carry a barrier injected after the marker, so every sink
+    has flushed the final batch. Waiting for any checkpoint is not enough: it
+    can complete before the barrier that follows the marker, and then
+    reconciliation reads a projection that is still one batch short.
+    """
+    from .kafka import FLUSH_WATERMARK_TARGET
+
+    wait_for_watermark(job_id, FLUSH_WATERMARK_TARGET, timeout=timeout)
+    after_id = int(latest_completed_checkpoint(job_id).get("id", 0))
+    return wait_for_checkpoint(job_id, after_id=after_id, timeout=timeout)
 
 
 def wait_for_restore(job_id: str, *, timeout: float = 180.0) -> dict:

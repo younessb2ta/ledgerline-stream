@@ -1,6 +1,5 @@
 package com.ledgerline.stream;
 
-import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.concurrent.TimeUnit;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
@@ -28,7 +27,7 @@ import org.apache.flink.streaming.api.windowing.time.Time;
  * Kafka (ledger.events)
  *   └─ JSON -> Event
  *       ├─ ledger_events            (every event, ON CONFLICT DO NOTHING)
- *       └─ watermarks (10 s bounded, end-of-replay flush)
+ *       └─ watermarks (10 s bounded, emitted per event, end-of-replay flush)
  *           ├─ late detector  ── side output ── late_events
  *           └─ money events
  *               ├─ keyBy(customer) -> ValueState balance -> customer_balances
@@ -40,6 +39,9 @@ import org.apache.flink.streaming.api.windowing.time.Time;
  * commit — see {@code docs/adr/0003}.
  */
 public class LedgerJob {
+    /** Kept in sync with the watermark bound used by {@link EventDrivenWatermarks}. */
+    private static final long OUT_OF_ORDERNESS_MS = 10_000L;
+
     public static void main(String[] args) throws Exception {
         ParameterTool params = ParameterTool.fromArgs(args);
 
@@ -151,8 +153,12 @@ public class LedgerJob {
         // operator and is filtered out before any sink. Relying on
         // `withIdleness` was not enough here: measured over REST, the watermark
         // stayed at `max_event_ts - 10s` indefinitely.
+        // Emitted per event rather than on Flink's 200 ms periodic tick: a
+        // wall-clock interval makes late classification depend on replay speed.
+        // See EventDrivenWatermarks for the measured 13-vs-16 failure.
         WatermarkStrategy<Event> watermarks =
-                WatermarkStrategy.<Event>forBoundedOutOfOrderness(Duration.ofSeconds(10))
+                WatermarkStrategy.<Event>forGenerator(
+                                context -> new EventDrivenWatermarks(OUT_OF_ORDERNESS_MS))
                         .withTimestampAssigner((event, timestamp) -> event.eventTsMillis());
 
         SingleOutputStreamOperator<Event> onTime =

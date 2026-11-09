@@ -15,6 +15,7 @@ import subprocess
 import sys
 import time
 import uuid
+from datetime import datetime
 from pathlib import Path
 
 from . import tools
@@ -25,6 +26,12 @@ CONTROL_EVENT = "stream_flush"
 # Far enough out that it closes any window a generator could produce. Sent
 # only after the last real event, so everything after it is late by definition.
 FLUSH_TS = "9999-12-31T23:59:59Z"
+FLUSH_TS_MILLIS = int(datetime.fromisoformat(FLUSH_TS.replace("Z", "+00:00")).timestamp() * 1000)
+# The job's watermark trails the newest timestamp by its bounded
+# out-of-orderness (10 s), so the marker leaves the window operator a few
+# seconds below its own timestamp. Anything within a minute of year 9999 means
+# the marker has passed; every real event is decades/centuries away.
+FLUSH_WATERMARK_TARGET = FLUSH_TS_MILLIS - 60_000
 CONTROLLER = "127.0.0.1:9093"
 DATA_DIR = tools.TOOLS / "kafka-data"
 CONFIG = tools.TOOLS / "kafka-kraft.properties"
