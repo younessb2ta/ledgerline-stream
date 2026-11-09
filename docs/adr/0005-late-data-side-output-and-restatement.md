@@ -22,7 +22,17 @@ its window:
 Use **event-time watermarks with bounded out-of-orderness and a custom late
 detector**:
 
-- `WatermarkStrategy.forBoundedOutOfOrderness(10 s)`.
+- An event-driven watermark generator with a 10 s bound
+  (`EventDrivenWatermarks`), emitted once per record. Flink's built-in
+  `forBoundedOutOfOrderness` emits on a 200 ms periodic tick, which is a
+  wall-clock quantity: under an accelerated replay the same seed produced 13
+  late events on one run and 16 on the next. Emitting per event ties the
+  watermark to input order, so late classification is reproducible.
+- `eventforge.apply_lateness` re-stamps a selected record 300 s behind the
+  **newest event produced so far**, not behind its own timestamp. A sparse
+  stream can otherwise contain a record older than itself but newer than its
+  predecessor, which is not late. The anchored shift makes every selected
+  record unambiguously late.
 - `LateDetector` compares each record's timestamp with
   `ctx.timerService().currentWatermark()`. If
   `event_ts <= watermark - 30 s` (the same rule as
@@ -70,8 +80,11 @@ row is restated in place rather than double-counted.
   sync between `LateDetector.ALLOWED_LATENESS_MS` and
   `.allowedLateness(Time.seconds(30))`; changing one without the other would
   make the two definitions disagree.
-- Lateness is measured against the *operator's* watermark at the moment the
-  record is processed, which depends on checkpoint/restore timing. The report
-  records the value observed in that run rather than a theoretical constant.
+- With per-event watermark emission and an anchored shift, the demo's lateness
+  is deterministic: all 141 late events are 290 s past the watermark on every
+  run (300 s shift minus the 10 s out-of-orderness bound). In a job that
+  restores from a checkpoint, a replayed record is still measured against the
+  restored watermark, so the report records the value observed in that run
+  rather than assuming it.
 - Restatement is a full recompute. That is fine for one day and honest for a
   demo; a production version would restrict it to affected windows.

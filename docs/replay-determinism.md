@@ -2,7 +2,7 @@
 
 The streaming demos compare a live pipeline against `eventforge`'s ground
 truth. That comparison is only meaningful if replaying the same seed produces
-the same projection. Three decisions make the run deterministic; each one was
+the same projection. Four decisions make the run deterministic; each one was
 forced by an observed failure, not chosen up front.
 
 ## 1. Produce in event-time order
@@ -47,7 +47,29 @@ An idle source subtask is also why parallelism must not exceed the partition
 count: a subtask with no splits never emits a watermark and holds the
 downstream minimum at `Long.MIN_VALUE`.
 
-## 3. Close the replay with an explicit marker
+## 3. Emit watermarks from events, not the wall clock
+
+Flink's `forBoundedOutOfOrderness(10 s)` emits on a periodic tick (every 200 ms
+by default). Under an accelerated replay that interval is a *wall-clock*
+quantity: whether a record 300 s behind the newest event is classified as late
+depends on whether it happens to be processed before or after the next tick.
+The same seed produced **13 late events on one run and 16 on the next**, so the
+late-data evidence was not reproducible even though the input was identical.
+
+`EventDrivenWatermarks` emits once per record instead: after event *i* the
+watermark is `max_ts(0..i) − 10 s`. Late classification becomes a function of
+input order alone, independent of producer rate or tick timing. One watermark
+per record is cheap at this scale (one partition, parallelism 1); a high-rate
+production job would emit on a tick or every N records.
+
+`eventforge.apply_lateness` is the matching change on the producer side: a
+selected record is stamped `late_seconds` behind the **newest event produced so
+far**, not behind its own timestamp. The stream is sparse enough that an event
+300 s older than itself can still be newer than its predecessor and therefore
+not late. Anchoring to the newest event makes every selected record
+unambiguously late (290 s under the 10 s bound) and keeps the set fixed.
+
+## 4. Close the replay with an explicit marker
 
 Kafka never signals end-of-input. A tumbling window fires only when the
 watermark crosses its end, so a bounded replay leaves the final window open.
@@ -71,13 +93,17 @@ definition.
 
 ## Result
 
-With those three rules the same seed always yields the same artifact:
+With those four rules the same seed always yields the same artifact:
 
 ```
-events: 2,870 (2,870 distinct), 396 balances, 632 windows, 0 late
+clean replay:  events: 2,870 (2,870 distinct), 396 balances, 632 windows, 0 late
 balance total = window total = 39,953,895 cents
-event_id sha256 = 1a63685fd48c191a…
+event_id sha256 = 1a63685fd48c1932…
+
+late-data run: 141 late, 611 provisional windows, 37,899,938 cents
+restated:      +2,053,957 cents across 34 windows, checksum 556e9e78…
 ```
 
-The full day's replay takes about 20 s at `--rate 600`, including the marker
-and the watermark advance.
+Two consecutive late-data runs produced identical counts and checksums. The
+full day's replay takes about 20 s at `--rate 600`, including the marker and the
+watermark advance.

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-09T16:35:24+00:00",
+  "generated_at": "2026-11-09T17:09:14+00:00",
   "mode": "late-data",
   "window": {
     "seed": 42,
@@ -17,12 +17,12 @@
   "observed": {
     "events": 2870,
     "distinct_events": 2870,
-    "customers_with_balance": 395,
-    "balance_total_cents": 39821419,
-    "revenue_windows": 629,
-    "window_total_cents": 39821419,
-    "late_events": 13,
-    "late_signed_cents": 132476,
+    "customers_with_balance": 390,
+    "balance_total_cents": 37899938,
+    "revenue_windows": 611,
+    "window_total_cents": 37899938,
+    "late_events": 141,
+    "late_signed_cents": 2053957,
     "write_attempts": 2870,
     "replayed_attempts": 0,
     "events_replayed": 0
@@ -54,46 +54,46 @@
     },
     {
       "name": "customer_balances_match_replay",
-      "expected": 395,
+      "expected": 390,
       "observed": 0,
       "pass": true
     },
     {
       "name": "revenue_windows_match_replay",
-      "expected": 629,
+      "expected": 611,
       "observed": 0,
       "pass": true
     },
     {
       "name": "provisional_balance_total_cents",
-      "expected": 39821419,
-      "observed": 39821419,
+      "expected": 37899938,
+      "observed": 37899938,
       "pass": true
     },
     {
       "name": "provisional_window_total_cents",
-      "expected": 39821419,
-      "observed": 39821419,
+      "expected": 37899938,
+      "observed": 37899938,
       "pass": true
     }
   ],
   "balance_replay": {
-    "customers_expected": 395,
-    "customers_observed": 395,
+    "customers_expected": 390,
+    "customers_observed": 390,
     "mismatches": 0,
     "max_abs_diff_cents": 0,
     "sample": {}
   },
   "window_replay": {
-    "windows_expected": 629,
-    "windows_observed": 629,
+    "windows_expected": 611,
+    "windows_observed": 611,
     "mismatches": 0,
     "max_abs_diff_cents": 0,
     "sample": {}
   },
   "latest_snapshot": {
-    "checkpoint_id": 1,
-    "customers": 395,
+    "checkpoint_id": 3,
+    "customers": 390,
     "mismatches": 0
   },
   "late_data": {
@@ -102,61 +102,77 @@
     "expected_events": 2870,
     "observed": {
       "events": 2870,
-      "late": 13,
-      "lateness_min": 63,
-      "lateness_max": 289,
-      "lateness_avg": 174.46153846153845,
-      "provisional_total_cents": 39821419
+      "late": 141,
+      "lateness_min": 290,
+      "lateness_max": 290,
+      "lateness_avg": 290.0,
+      "provisional_total_cents": 37899938
     },
     "restatement": {
-      "windows_provisional": 629,
-      "windows_restated": 629,
-      "windows_with_diff": 3,
-      "revenue_delta_cents": 132476,
+      "windows_provisional": 611,
+      "windows_restated": 631,
+      "windows_with_diff": 34,
+      "revenue_delta_cents": 2053957,
       "sample": {
-        "2026-11-01 12:06:00+00:00": {
-          "provisional": 80871,
-          "restated": 101290
+        "2026-11-01 08:32:00+00:00": {
+          "provisional": 0,
+          "restated": 16408
         },
-        "2026-11-01 16:11:00+00:00": {
-          "provisional": 3203,
-          "restated": 98640
+        "2026-11-01 05:35:00+00:00": {
+          "provisional": 38680,
+          "restated": 114247
         },
-        "2026-11-01 21:49:00+00:00": {
-          "provisional": 52682,
-          "restated": 69302
+        "2026-11-01 07:06:00+00:00": {
+          "provisional": 0,
+          "restated": 90245
+        },
+        "2026-11-01 04:47:00+00:00": {
+          "provisional": 0,
+          "restated": 69458
+        },
+        "2026-11-01 03:52:00+00:00": {
+          "provisional": 35805,
+          "restated": 82839
         }
       }
     },
     "restatement_rerun": {
-      "windows_provisional": 629,
-      "windows_restated": 629,
-      "windows_with_diff": 3,
-      "revenue_delta_cents": 132476,
+      "windows_provisional": 611,
+      "windows_restated": 631,
+      "windows_with_diff": 34,
+      "revenue_delta_cents": 2053957,
       "sample": {
-        "2026-11-01 12:06:00+00:00": {
-          "provisional": 80871,
-          "restated": 101290
+        "2026-11-01 08:32:00+00:00": {
+          "provisional": 0,
+          "restated": 16408
         },
-        "2026-11-01 16:11:00+00:00": {
-          "provisional": 3203,
-          "restated": 98640
+        "2026-11-01 05:35:00+00:00": {
+          "provisional": 38680,
+          "restated": 114247
         },
-        "2026-11-01 21:49:00+00:00": {
-          "provisional": 52682,
-          "restated": 69302
+        "2026-11-01 07:06:00+00:00": {
+          "provisional": 0,
+          "restated": 90245
+        },
+        "2026-11-01 04:47:00+00:00": {
+          "provisional": 0,
+          "restated": 69458
+        },
+        "2026-11-01 03:52:00+00:00": {
+          "provisional": 35805,
+          "restated": 82839
         }
       }
     },
     "restated_summary_first": {
-      "windows": 629,
+      "windows": 631,
       "cents": 39953895,
-      "checksum": "4632a379f7141a231f9f700aeb48aae2"
+      "checksum": "556e9e78fd29d1c87b4485d2e86a60fe"
     },
     "restated_summary_second": {
-      "windows": 629,
+      "windows": 631,
       "cents": 39953895,
-      "checksum": "4632a379f7141a231f9f700aeb48aae2"
+      "checksum": "556e9e78fd29d1c87b4485d2e86a60fe"
     },
     "restatement_idempotent": true,
     "late_events_are_excluded_from_provisional": true,

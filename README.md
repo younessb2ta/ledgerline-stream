@@ -37,8 +37,8 @@ eventforge ──► Kafka (ledger.events)
 
 ![Ledgerline dashboard during the late-data run](docs/screenshots/dashboard.png)
 
-*Late-data run: 13 events missed their window, the provisional total is
-39,821,419 cents, and the checkpoint counter is live.*
+*Late-data run: 141 events missed their window, the provisional total is
+37,899,938 cents, and the checkpoint counter is live.*
 
 ## Stack (free path)
 
@@ -101,15 +101,15 @@ make demo-exactly-once
 The script waits for a checkpoint, kills the busy TaskManager with `SIGKILL`,
 waits for the job to restore, finishes the replay, flushes, and reconciles.
 
-Measured run (`evidence/exactly-once-20261109T163222Z.json`):
+Measured run (`evidence/exactly-once-20261109T170920Z.json`):
 
 | Signal | Observed |
 |---|---|
-| Restore time | 30.5 s |
+| Restore time | 21.3 s |
 | Checkpoints restored | 1 |
 | Events | 2,870 distinct, 0 duplicates |
-| Insert attempts | 3,109 for 2,870 events |
-| Replayed writes absorbed | 239 |
+| Insert attempts | 3,052 for 2,870 events |
+| Replayed writes absorbed | 182 |
 | Balance / window total | 39,953,895 cents (both) |
 
 A `BEFORE INSERT` trigger counts every attempt, including the ones
@@ -124,16 +124,25 @@ idempotent on `event_id`.
 make demo-late-data
 ```
 
-5% of events are shifted 300 s into the past *after* the stream is ordered.
-Measured run:
+5% of events are re-stamped 300 s behind the newest event already produced,
+*after* the stream is ordered. Anchoring the shift to the stream rather than to
+each event's own timestamp matters: the stream is sparse, so a record that is
+300 s older than itself can still be newer than its predecessor and therefore
+not late at all. The anchored shift makes every selected record unambiguously
+late, and the classification no longer depends on replay speed.
+
+Measured run (`evidence/late-data-20261109T170802Z.json`):
 
 | Signal | Observed |
 |---|---|
-| Late events | 13 (recorded in `late_events`) |
-| Provisional total | 39,821,419 cents |
+| Late events | 141 (recorded in `late_events`) |
+| Lateness | 290 s for every late event |
+| Provisional total | 37,899,938 cents |
 | Restated total | 39,953,895 cents |
-| Added by late data | +132,476 cents across 3 windows |
-| Restatement rerun checksum | identical (`4632a379…`) |
+| Added by late data | +2,053,957 cents across 34 windows |
+| Restatement rerun checksum | identical (`556e9e78…`) |
+
+Two consecutive runs produced the same 141 late events and the same checksum.
 
 Late events stay in `ledger_events` (the replayable log) but are excluded from
 `customer_balances` and `revenue_windows`. `--restate` recomputes the
@@ -188,7 +197,7 @@ artifacts/            generated evidence from the latest run (gitignored)
 ## Tests
 
 ```bash
-make test     # 18 tests, no running stack required
+make test     # 23 tests, no running stack required
 make lint
 ```
 
