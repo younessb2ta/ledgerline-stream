@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.DS_Store
+*.log
+
+# local state
+.pgdata/
+.checkpoints/
+.run/
+artifacts/
+flink-job/target/
