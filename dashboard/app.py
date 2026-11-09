@@ -151,17 +151,20 @@ def live() -> None:
     with right:
         st.subheader("Checkpoint health")
         if health:
+            # One dtype per column: a mix of ints, strings, and None makes
+            # Arrow fall back to object and log a serialization traceback.
+            signals = [
+                ("job", job["jid"]),
+                ("state", job_state),
+                ("latest checkpoint", health.get("latest_id")),
+                ("age", seconds(health.get("age_seconds"))),
+                ("completed", health.get("completed")),
+                ("failed", health.get("failed")),
+                ("restored", health.get("restored")),
+            ]
             st.dataframe(
                 pd.DataFrame(
-                    [
-                        ["job", job["jid"]],
-                        ["state", job_state],
-                        ["latest checkpoint", health.get("latest_id")],
-                        ["age", seconds(health.get("age_seconds"))],
-                        ["completed", health.get("completed")],
-                        ["failed", health.get("failed")],
-                        ["restored", health.get("restored")],
-                    ],
+                    [(name, str(value)) for name, value in signals],
                     columns=["signal", "value"],
                 ),
                 width="stretch",
