@@ -201,6 +201,11 @@ make test     # 23 tests, no running stack required
 make lint
 ```
 
+CI (`.github/workflows/ci.yml`) runs lint and tests on Ubuntu, then builds the
+Flink jar with JDK 17. `eventforge` is an editable sibling path, so the workflow
+checks out `ledgerline-batch` next to this repository rather than trying to
+resolve it from PyPI.
+
 ## Known limitations
 
 - **Parallelism 1 and one Kafka partition** for the deterministic replay. With
