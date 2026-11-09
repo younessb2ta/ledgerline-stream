@@ -27,13 +27,18 @@ eventforge ──► Kafka (ledger.events)
 
 | Requirement | Where |
 |---|---|
-| Exactly-once (at-least-once + idempotent sink) | `demo/exactly_once.py`, [ADR-0003](../ledgerline-batch/docs/adr/0003-at-least-once-idempotent-sink.md) |
+| Exactly-once (at-least-once + idempotent sink) | `demo/exactly_once.py`, ADR-0003 in `ledgerline-batch` |
 | Event-time watermarks, allowed lateness | `LedgerJob`, `LateDetector`, [ADR-0005](docs/adr/0005-late-data-side-output-and-restatement.md) |
 | Late-data side output + restatement | `late_events`, `reconciliation --restate`, `demo/late_data.py` |
 | RocksDB state + checkpoints + restore | `LedgerJob`, [ADR-0004](docs/adr/0004-rocksdb-incremental-checkpoints.md) |
 | Live dashboard | `dashboard/app.py` |
 | Deterministic replay | [docs/replay-determinism.md](docs/replay-determinism.md) |
 | Ground-truth reconciliation | `reconciliation/reconcile.py` |
+
+![Ledgerline dashboard during the late-data run](docs/screenshots/dashboard.png)
+
+*Late-data run: 13 events missed their window, the provisional total is
+39,821,419 cents, and the checkpoint counter is live.*
 
 ## Stack (free path)
 
