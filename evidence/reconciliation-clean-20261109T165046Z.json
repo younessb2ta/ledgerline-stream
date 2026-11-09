@@ -1,0 +1,99 @@
+{
+  "generated_at": "2026-11-09T16:50:46+00:00",
+  "mode": "exactly-once",
+  "window": {
+    "seed": 42,
+    "start": "2026-11-01",
+    "days": 1,
+    "customers": 500,
+    "products": 200,
+    "orders_per_day": 800
+  },
+  "expected": {
+    "events": 2870,
+    "customers": 396,
+    "total_revenue_cents": 39953895
+  },
+  "observed": {
+    "events": 2870,
+    "distinct_events": 2870,
+    "customers_with_balance": 396,
+    "balance_total_cents": 39953895,
+    "revenue_windows": 632,
+    "window_total_cents": 39953895,
+    "late_events": 0,
+    "late_signed_cents": 0,
+    "write_attempts": 2870,
+    "replayed_attempts": 0,
+    "events_replayed": 0
+  },
+  "checks": [
+    {
+      "name": "events_recorded",
+      "expected": 2870,
+      "observed": 2870,
+      "pass": true
+    },
+    {
+      "name": "events_distinct",
+      "expected": 2870,
+      "observed": 2870,
+      "pass": true
+    },
+    {
+      "name": "duplicate_rows",
+      "expected": 0,
+      "observed": 0,
+      "pass": true
+    },
+    {
+      "name": "event_id_sha256",
+      "expected": "1a63685fd48c1932",
+      "observed": "1a63685fd48c1932",
+      "pass": true
+    },
+    {
+      "name": "customer_balances_match_replay",
+      "expected": 396,
+      "observed": 0,
+      "pass": true
+    },
+    {
+      "name": "revenue_windows_match_replay",
+      "expected": 632,
+      "observed": 0,
+      "pass": true
+    },
+    {
+      "name": "provisional_balance_total_cents",
+      "expected": 39953895,
+      "observed": 39953895,
+      "pass": true
+    },
+    {
+      "name": "provisional_window_total_cents",
+      "expected": 39953895,
+      "observed": 39953895,
+      "pass": true
+    }
+  ],
+  "balance_replay": {
+    "customers_expected": 396,
+    "customers_observed": 396,
+    "mismatches": 0,
+    "max_abs_diff_cents": 0,
+    "sample": {}
+  },
+  "window_replay": {
+    "windows_expected": 632,
+    "windows_observed": 632,
+    "mismatches": 0,
+    "max_abs_diff_cents": 0,
+    "sample": {}
+  },
+  "latest_snapshot": {
+    "checkpoint_id": 3,
+    "customers": 396,
+    "mismatches": 0
+  }
+}

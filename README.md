@@ -101,7 +101,7 @@ make demo-exactly-once
 The script waits for a checkpoint, kills the busy TaskManager with `SIGKILL`,
 waits for the job to restore, finishes the replay, flushes, and reconciles.
 
-Measured run (`artifacts/exactly-once-20261109T163222Z.json`):
+Measured run (`evidence/exactly-once-20261109T163222Z.json`):
 
 | Signal | Observed |
 |---|---|
@@ -140,6 +140,10 @@ Late events stay in `ledger_events` (the replayable log) but are excluded from
 authoritative windows from **all** events. Running it twice produces the same
 checksum, so replaying the restatement is safe.
 
+Curated copies of both reports, plus a clean replay, are in
+[`evidence/`](evidence/) so the numbers above can be inspected without starting
+the stack.
+
 ## Reconciliation
 
 `reconciliation/reconcile.py` answers two separate questions and exits non-zero
@@ -177,7 +181,8 @@ db/schema.sql         7 tables + insert-attempt audit trigger
 demo/                 reset, exactly_once, late_data
 tests/                pure reconciliation, marker, schema, dashboard tests
 docs/adr/             0004 RocksDB/checkpoints, 0005 late data
-artifacts/            generated evidence (gitignored)
+evidence/             curated demo reports (the numbers quoted above)
+artifacts/            generated evidence from the latest run (gitignored)
 ```
 
 ## Tests

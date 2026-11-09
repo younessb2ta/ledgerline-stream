@@ -1,0 +1,165 @@
+{
+  "generated_at": "2026-11-09T16:35:24+00:00",
+  "mode": "late-data",
+  "window": {
+    "seed": 42,
+    "start": "2026-11-01",
+    "days": 1,
+    "customers": 500,
+    "products": 200,
+    "orders_per_day": 800
+  },
+  "expected": {
+    "events": 2870,
+    "customers": 396,
+    "total_revenue_cents": 39953895
+  },
+  "observed": {
+    "events": 2870,
+    "distinct_events": 2870,
+    "customers_with_balance": 395,
+    "balance_total_cents": 39821419,
+    "revenue_windows": 629,
+    "window_total_cents": 39821419,
+    "late_events": 13,
+    "late_signed_cents": 132476,
+    "write_attempts": 2870,
+    "replayed_attempts": 0,
+    "events_replayed": 0
+  },
+  "checks": [
+    {
+      "name": "events_recorded",
+      "expected": 2870,
+      "observed": 2870,
+      "pass": true
+    },
+    {
+      "name": "events_distinct",
+      "expected": 2870,
+      "observed": 2870,
+      "pass": true
+    },
+    {
+      "name": "duplicate_rows",
+      "expected": 0,
+      "observed": 0,
+      "pass": true
+    },
+    {
+      "name": "event_id_sha256",
+      "expected": "1a63685fd48c1932",
+      "observed": "1a63685fd48c1932",
+      "pass": true
+    },
+    {
+      "name": "customer_balances_match_replay",
+      "expected": 395,
+      "observed": 0,
+      "pass": true
+    },
+    {
+      "name": "revenue_windows_match_replay",
+      "expected": 629,
+      "observed": 0,
+      "pass": true
+    },
+    {
+      "name": "provisional_balance_total_cents",
+      "expected": 39821419,
+      "observed": 39821419,
+      "pass": true
+    },
+    {
+      "name": "provisional_window_total_cents",
+      "expected": 39821419,
+      "observed": 39821419,
+      "pass": true
+    }
+  ],
+  "balance_replay": {
+    "customers_expected": 395,
+    "customers_observed": 395,
+    "mismatches": 0,
+    "max_abs_diff_cents": 0,
+    "sample": {}
+  },
+  "window_replay": {
+    "windows_expected": 629,
+    "windows_observed": 629,
+    "mismatches": 0,
+    "max_abs_diff_cents": 0,
+    "sample": {}
+  },
+  "latest_snapshot": {
+    "checkpoint_id": 1,
+    "customers": 395,
+    "mismatches": 0
+  },
+  "late_data": {
+    "requested_late_pct": 0.05,
+    "requested_late_seconds": 300,
+    "expected_events": 2870,
+    "observed": {
+      "events": 2870,
+      "late": 13,
+      "lateness_min": 63,
+      "lateness_max": 289,
+      "lateness_avg": 174.46153846153845,
+      "provisional_total_cents": 39821419
+    },
+    "restatement": {
+      "windows_provisional": 629,
+      "windows_restated": 629,
+      "windows_with_diff": 3,
+      "revenue_delta_cents": 132476,
+      "sample": {
+        "2026-11-01 12:06:00+00:00": {
+          "provisional": 80871,
+          "restated": 101290
+        },
+        "2026-11-01 16:11:00+00:00": {
+          "provisional": 3203,
+          "restated": 98640
+        },
+        "2026-11-01 21:49:00+00:00": {
+          "provisional": 52682,
+          "restated": 69302
+        }
+      }
+    },
+    "restatement_rerun": {
+      "windows_provisional": 629,
+      "windows_restated": 629,
+      "windows_with_diff": 3,
+      "revenue_delta_cents": 132476,
+      "sample": {
+        "2026-11-01 12:06:00+00:00": {
+          "provisional": 80871,
+          "restated": 101290
+        },
+        "2026-11-01 16:11:00+00:00": {
+          "provisional": 3203,
+          "restated": 98640
+        },
+        "2026-11-01 21:49:00+00:00": {
+          "provisional": 52682,
+          "restated": 69302
+        }
+      }
+    },
+    "restated_summary_first": {
+      "windows": 629,
+      "cents": 39953895,
+      "checksum": "4632a379f7141a231f9f700aeb48aae2"
+    },
+    "restated_summary_second": {
+      "windows": 629,
+      "cents": 39953895,
+      "checksum": "4632a379f7141a231f9f700aeb48aae2"
+    },
+    "restatement_idempotent": true,
+    "late_events_are_excluded_from_provisional": true,
+    "note": "A late event is kept in ledger_events and late_events, excluded from customer_balances and revenue_windows, and added back by revenue_windows_restated. The restated checksum is stable across repeated runs."
+  }
+}
