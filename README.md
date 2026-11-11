@@ -197,7 +197,7 @@ artifacts/            generated evidence from the latest run (gitignored)
 ## Tests
 
 ```bash
-make test     # 23 tests, no running stack required
+make test     # 28 tests, no running stack required
 make lint
 ```
 
@@ -224,3 +224,14 @@ resolve it from PyPI.
   deployment would key by a dimension and accept per-key parallel windows.
 - Streamlit reads Postgres directly; it is an operator view, not a serving
   layer.
+
+### What I'd do differently
+
+Design the window key and the Kafka partition key together from the start
+(`customer_id` for both), so scale-out is a configuration change rather than a
+correctness question. I would also put a real transactional sink (Iceberg or
+Kafka transactions) behind the same interface, keeping the idempotent upsert as
+the free-path fallback, and test the lifecycle scripts in CI against an embedded
+broker instead of only exercising them by hand. The event-driven watermark
+generator was the right call, but it should have been the first design, not a
+fix for `withIdleness` surprises.
