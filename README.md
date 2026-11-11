@@ -236,3 +236,7 @@ the free-path fallback, and test the lifecycle scripts in CI against an embedded
 broker instead of only exercising them by hand. The event-driven watermark
 generator was the right call, but it should have been the first design, not a
 fix for `withIdleness` surprises.
+
+## License
+
+MIT — see [`LICENSE`](LICENSE).
