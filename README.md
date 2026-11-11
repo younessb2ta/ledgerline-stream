@@ -68,7 +68,8 @@ make dashboard        # http://127.0.0.1:8501
 
 `make replay` is the one-command demo. It resets the topic to one partition,
 submits the job, produces the ordered day, sends the end-of-replay marker, and
-reconciles against `eventforge`.
+reconciles against `eventforge`. The 3-minute recording guide is in
+[`docs/demo-script.md`](docs/demo-script.md).
 
 If `make` is unavailable (it needs the Xcode command-line tools on this
 machine), the same targets are plain modules:
