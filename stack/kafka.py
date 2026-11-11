@@ -11,6 +11,7 @@ import contextlib
 import json
 import os
 import signal
+import socket
 import subprocess
 import sys
 import time
@@ -102,18 +103,42 @@ def format_storage() -> None:
     )
 
 
+def _broker_address() -> tuple[str, int]:
+    host, _, port = BOOTSTRAP.rpartition(":")
+    return host, int(port)
+
+
+def broker_listening(host: str | None = None, port: int | None = None) -> bool:
+    """True if something accepts TCP connections on the broker port.
+
+    ``kafka-topics.sh`` retries for a long time when no broker is listening, so
+    the cold-start preflight must not call it first. A sub-second socket probe
+    keeps ``kafka up`` responsive on a machine where nothing is running yet.
+    """
+    default_host, default_port = _broker_address()
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+        probe.settimeout(0.5)
+        return probe.connect_ex((host or default_host, port or default_port)) == 0
+
+
 def _topic_exists() -> bool:
-    result = subprocess.run(
-        [
-            str(tools.kafka_bin("kafka-topics.sh")),
-            "--bootstrap-server",
-            BOOTSTRAP,
-            "--list",
-        ],
-        capture_output=True,
-        text=True,
-        env=java_env(),
-    )
+    if not broker_listening():
+        return False
+    try:
+        result = subprocess.run(
+            [
+                str(tools.kafka_bin("kafka-topics.sh")),
+                "--bootstrap-server",
+                BOOTSTRAP,
+                "--list",
+            ],
+            capture_output=True,
+            text=True,
+            env=java_env(),
+            timeout=15,
+        )
+    except subprocess.TimeoutExpired:
+        return False
     return result.returncode == 0
 
 
@@ -224,6 +249,10 @@ def delete_group(group: str = "ledgerline-stream") -> None:
         env=java_env(),
     )
     output = (result.stdout or result.stderr).strip()
+    if "GroupIdNotFoundException" in output:
+        # First run after a fresh broker: there is no group to forget.
+        print(f"consumer group {group}: does not exist yet")
+        return
     print(output or f"consumer group {group}: nothing to delete")
 
 

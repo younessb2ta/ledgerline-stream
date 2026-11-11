@@ -10,10 +10,13 @@ design; see docs/adr).
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
+import signal
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -332,11 +335,78 @@ def up() -> None:
     )
 
 
+FLINK_MAIN_CLASSES = ("TaskManagerRunner", "StandaloneSessionClusterEntrypoint")
+
+
+def parse_flink_processes(ps_output: str, flink_home: Path | str) -> list[tuple[int, str]]:
+    """Return ``(pid, main_class)`` for Flink JVMs rooted at ``flink_home``.
+
+    ``stop-cluster.sh`` only signals the pids it recorded under ``$FLINK_HOME/log``
+    with the *current* hostname. On macOS the file is named after the LAN IP, so
+    a process started before the address changed (or a TaskManager started by
+    hand) survives ``down``, keeps its port and RocksDB locks, and makes the
+    next ``up`` see a half-dead cluster. Parsing ``ps`` by command line reaps
+    those regardless of how the pid file was named.
+
+    Pure so the matching rules can be tested without a running JVM.
+    """
+    home = Path(flink_home)
+    roots = {f"{home}/", f"{home.resolve()}/"}
+    found: list[tuple[int, str]] = []
+    for line in ps_output.splitlines():
+        pid_text, _, command = line.strip().partition(" ")
+        if not pid_text.isdigit():
+            continue
+        if not any(root in command for root in roots):
+            continue
+        main = next((name for name in FLINK_MAIN_CLASSES if name in command), None)
+        if main:
+            found.append((int(pid_text), main))
+    return found
+
+
+def _flink_processes() -> list[tuple[int, str]]:
+    result = subprocess.run(
+        ["ps", "-eo", "pid=,command="],
+        capture_output=True,
+        text=True,
+    )
+    return parse_flink_processes(result.stdout, tools.FLINK_HOME)
+
+
+def reap_lingering(*, timeout: float = 10.0) -> list[int]:
+    """Terminate Flink JVMs that outlived ``stop-cluster.sh``.
+
+    SIGTERM first so the JobManager can run its shutdown hooks, then SIGKILL
+    anything still alive after ``timeout``. Returns every pid that was signalled.
+    """
+    lingering = _flink_processes()
+    if not lingering:
+        return []
+    for pid, main in lingering:
+        print(f"terminating lingering {main} (pid {pid})")
+        with contextlib.suppress(ProcessLookupError):
+            os.kill(pid, signal.SIGTERM)
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if not _flink_processes():
+            return [pid for pid, _ in lingering]
+        time.sleep(0.5)
+    for pid, main in _flink_processes():
+        print(f"kill -9 {pid} ({main})")
+        with contextlib.suppress(ProcessLookupError):
+            os.kill(pid, signal.SIGKILL)
+    return [pid for pid, _ in lingering]
+
+
 def down() -> None:
     if not tools.FLINK_HOME.exists():
         print("flink is not installed")
         return
     tools.run([str(tools.flink_bin("stop-cluster.sh"))], check=False, env=java_env())
+    reaped = reap_lingering()
+    if reaped:
+        print(f"reaped {len(reaped)} lingering flink process(es)")
 
 
 def status() -> None:

@@ -186,9 +186,9 @@ flink-job/            Java 17 job; Maven builds ledgerline-flink-job.jar
 reconciliation/       ground-truth + projection checks, restatement
 dashboard/            Streamlit app (2 s fragment refresh)
 stack/                native lifecycle: postgres, kafka, flink, downloads
-db/schema.sql         7 tables + insert-attempt audit trigger
-demo/                 reset, exactly_once, late_data
-tests/                pure reconciliation, marker, schema, dashboard tests
+db/schema.sql         8 tables + insert-attempt audit trigger
+demo/                 reset, settle, exactly_once, late_data
+tests/                pure reconciliation, marker, schema, dashboard, watermark tests
 docs/adr/             0004 RocksDB/checkpoints, 0005 late data
 evidence/             curated demo reports (the numbers quoted above)
 artifacts/            generated evidence from the latest run (gitignored)
