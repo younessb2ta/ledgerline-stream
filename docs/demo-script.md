@@ -36,7 +36,7 @@ that implies it was instant.
 | 0:20–0:40 | Architecture fence from the README; scroll Flink UI's job graph. | "Kafka carries one ordered topic. Flink keeps RocksDB state, checkpoints to disk, and writes to Postgres with an idempotent upsert. Streamlit reads Postgres directly." |
 | 0:40–1:10 | `make replay`. Show reset, submit, 2,870 events, flush, settle. Then the reconciliation table. | "One command resets state, submits job parallelism one, produces a deterministic day, sends an end-of-replay marker, waits for a checkpoint, and reconciles. Every check passes: 2,870 distinct events, 396 balances, 632 windows." |
 | 1:10–1:25 | Dashboard: revenue, late count, checkpoint health. | "The dashboard is the operator view: revenue in cents, the open-window count, and whether checkpoints are healthy. For this clean replay the total is $399,538.95." |
-| 1:25–2:05 | `make demo-exactly-once`. Show the TaskManager kill, Flink restart, restore time, and the insert-attempt table. | "Now the failure proof. The demo kills a TaskManager after the first checkpoint. Flink restores from RocksDB and the Kafka offsets in that checkpoint, replays 182 writes, and the sink's `ON CONFLICT` absorbs them. 3,052 attempts for 2,870 events, zero duplicates, totals unchanged. That is at-least-once plus an idempotent sink — effectively-once, not two-phase commit." |
+| 1:25–2:05 | `make demo-exactly-once`. Show the TaskManager kill, Flink restart, restore time, and the insert-attempt table. | "Now the failure proof. The demo kills a TaskManager after the first checkpoint. Flink restores from RocksDB and the Kafka offsets in that checkpoint and replays the in-flight writes — 182 in the committed run, though the count depends on where the kill lands. The sink's `ON CONFLICT` absorbs them. Zero duplicate rows, totals unchanged. That is at-least-once plus an idempotent sink — effectively-once, not two-phase commit." |
 | 2:05–2:40 | `make demo-late-data`. Show provisional dashboard, then the restatement diff. | "Now 5% of events arrive 290 seconds late. The provisional view excludes 141 events and shows $378,999.38. Restatement adds $20,539.57 across 34 windows and lands on the same $399,538.95. The checksum is identical on a rerun, so the correction is repeatable, not a one-off." |
 | 2:40–3:00 | `evidence/` index, then `docs/replay-determinism.md` rules 1–4. | "The curated reports ship with the repo. Determinism is four rules: one partition, parallelism one, event-driven watermarks, and a flush marker that closes the last window. Scale-out is deliberately out of scope and documented as such." |
 
@@ -44,8 +44,10 @@ that implies it was instant.
 
 - Clean replay: 2,870 events, 396 balances, 632 windows, 0 late,
   39,953,895 cents = $399,538.95; event-ID hash `1a63685fd48c1932…`.
-- Exactly-once: kill after checkpoint 1; restore 21.3 s; 3,052 insert attempts;
-  182 replayed and absorbed; 0 duplicate rows; final total 39,953,895 cents.
+- Exactly-once: kill after checkpoint 1; the committed run restored in 21.3 s
+  with 3,052 insert attempts and 182 replayed writes. Restore time and replay
+  volume depend on kill timing; the invariant is 2,870 distinct events, 0
+  duplicates, and 39,953,895 cents on both sinks.
 - Late data: 141 events, 290 s late; provisional 37,899,938 cents =
   $378,999.38; restated +2,053,957 cents across 34 windows; checksum
   `556e9e78fd29d1c87b4485d2e86a60fe`.

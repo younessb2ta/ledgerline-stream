@@ -119,6 +119,13 @@ looks exactly like a sink that never replayed anything. This is
 **effectively-once**: delivery is at-least-once, and each side effect is
 idempotent on `event_id`.
 
+Restore time and replay volume depend on where the kill lands. A second
+committed run
+([`evidence/exactly-once-20261111T180210Z.json`](evidence/exactly-once-20261111T180210Z.json))
+restored more slowly and absorbed a different number of writes, but still
+produced 2,870 distinct events, zero duplicates, and the same totals. Those are
+the invariants; the counts above describe one recorded run.
+
 ### Late data: provisional view, then restatement
 
 ```bash

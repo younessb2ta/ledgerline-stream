@@ -1,0 +1,112 @@
+{
+  "generated_at": "2026-11-11T18:03:15+00:00",
+  "mode": "exactly-once",
+  "window": {
+    "seed": 42,
+    "start": "2026-11-01",
+    "days": 1,
+    "customers": 500,
+    "products": 200,
+    "orders_per_day": 800
+  },
+  "expected": {
+    "events": 2870,
+    "customers": 396,
+    "total_revenue_cents": 39953895
+  },
+  "observed": {
+    "events": 2870,
+    "distinct_events": 2870,
+    "customers_with_balance": 396,
+    "balance_total_cents": 39953895,
+    "revenue_windows": 632,
+    "window_total_cents": 39953895,
+    "late_events": 0,
+    "late_signed_cents": 0,
+    "write_attempts": 3211,
+    "replayed_attempts": 341,
+    "events_replayed": 341
+  },
+  "checks": [
+    {
+      "name": "events_recorded",
+      "expected": 2870,
+      "observed": 2870,
+      "pass": true
+    },
+    {
+      "name": "events_distinct",
+      "expected": 2870,
+      "observed": 2870,
+      "pass": true
+    },
+    {
+      "name": "duplicate_rows",
+      "expected": 0,
+      "observed": 0,
+      "pass": true
+    },
+    {
+      "name": "event_id_sha256",
+      "expected": "1a63685fd48c1932",
+      "observed": "1a63685fd48c1932",
+      "pass": true
+    },
+    {
+      "name": "customer_balances_match_replay",
+      "expected": 396,
+      "observed": 0,
+      "pass": true
+    },
+    {
+      "name": "revenue_windows_match_replay",
+      "expected": 632,
+      "observed": 0,
+      "pass": true
+    },
+    {
+      "name": "provisional_balance_total_cents",
+      "expected": 39953895,
+      "observed": 39953895,
+      "pass": true
+    },
+    {
+      "name": "provisional_window_total_cents",
+      "expected": 39953895,
+      "observed": 39953895,
+      "pass": true
+    }
+  ],
+  "balance_replay": {
+    "customers_expected": 396,
+    "customers_observed": 396,
+    "mismatches": 0,
+    "max_abs_diff_cents": 0,
+    "sample": {}
+  },
+  "window_replay": {
+    "windows_expected": 632,
+    "windows_observed": 632,
+    "mismatches": 0,
+    "max_abs_diff_cents": 0,
+    "sample": {}
+  },
+  "latest_snapshot": {
+    "checkpoint_id": 4,
+    "customers": 396,
+    "mismatches": 0
+  },
+  "failover": {
+    "job_id": "113f3b71795f2ac13d4fc9d4b981803b",
+    "victim_taskmanager": "localhost:60265-36ac88",
+    "victim_pid": 58268,
+    "checkpoint_before_kill": 1,
+    "checkpoint_after_restore": 1,
+    "restores": 1,
+    "restore_seconds": 27.6,
+    "events_before_kill": 737,
+    "attempts_before_kill": 737,
+    "taskmanager_replaced": true,
+    "note": "The source resumed from the checkpoint offset, so events processed after that checkpoint were delivered again. The insert-attempt trigger shows the replay; distinct rows and balances are unchanged."
+  }
+}
