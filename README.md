@@ -1,5 +1,7 @@
 # ledgerline-stream
 
+[![ci](https://github.com/younessb2ta/ledgerline-stream/actions/workflows/ci.yml/badge.svg)](https://github.com/younessb2ta/ledgerline-stream/actions/workflows/ci.yml)
+
 The real-time half of **Ledgerline**: Kafka → Flink → Postgres → Streamlit.
 
 `ledgerline-batch` owns the same events on a daily cadence and is the
